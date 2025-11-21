@@ -1,0 +1,8 @@
+{
+  "name": "Equatorial Talent Intelligence",
+  "description": "Delivering Intelligent Manpower Outsourcing, Regulatory Compliance, and Talent Development for Uganda's Oil & Gas, Banking, Telecom, and Agriculture sectors.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

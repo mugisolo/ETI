@@ -1,21 +1,32 @@
-import React, { useState, useRef } from 'react';
-import { CandidateDocument, Job, JobMatchResult, ComplianceReport, OsintReport } from '../types';
+
+import React, { useState, useRef, useEffect } from 'react';
+import { CandidateDocument, Job, JobMatchResult, ComplianceReport, OsintReport, Candidate } from '../types';
 import { matchCandidateToJob, analyzeDocuments, generateOsintReport } from '../services/geminiService';
 
 interface CandidatePortalProps {
   jobs: Job[];
+  initialCandidate?: Candidate;
 }
 
-export const CandidatePortal: React.FC<CandidatePortalProps> = ({ jobs }) => {
-  const [documents, setDocuments] = useState<CandidateDocument[]>([]);
-  const [basicScore, setBasicScore] = useState<number | null>(null);
+export const CandidatePortal: React.FC<CandidatePortalProps> = ({ jobs, initialCandidate }) => {
+  const [documents, setDocuments] = useState<CandidateDocument[]>(initialCandidate?.documents || []);
+  const [basicScore, setBasicScore] = useState<number | null>(initialCandidate?.basicScore || null);
   const [recommendations, setRecommendations] = useState<JobMatchResult[]>([]);
-  const [profileInfo, setProfileInfo] = useState<ComplianceReport | null>(null);
-  const [osintResult, setOsintResult] = useState<OsintReport | null>(null);
+  const [profileInfo, setProfileInfo] = useState<ComplianceReport | null>(initialCandidate?.report || null);
+  const [osintResult, setOsintResult] = useState<OsintReport | null>(initialCandidate?.osint || null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isOsintProcessing, setIsOsintProcessing] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // If initialCandidate changes, update state (useful for simulations)
+  useEffect(() => {
+    if (initialCandidate) {
+        setDocuments(initialCandidate.documents || []);
+        setProfileInfo(initialCandidate.report || null);
+        setOsintResult(initialCandidate.osint || null);
+    }
+  }, [initialCandidate]);
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -92,6 +103,15 @@ export const CandidatePortal: React.FC<CandidatePortalProps> = ({ jobs }) => {
     }
   };
 
+  const downloadDocument = (doc: CandidateDocument) => {
+    const link = document.createElement('a');
+    link.href = `data:${doc.mimeType};base64,${doc.base64}`;
+    link.download = doc.name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -149,10 +169,15 @@ export const CandidatePortal: React.FC<CandidatePortalProps> = ({ jobs }) => {
               
               <div className="max-h-48 overflow-y-auto space-y-2 scrollbar-hide">
                 {documents.map((doc, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs bg-gray-50 p-3 rounded-lg border border-gray-100 group hover:bg-gray-100 transition-colors">
-                    <div className="flex items-center gap-2 overflow-hidden">
-                       <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                       <span className="truncate max-w-[120px] font-medium text-gray-700">{doc.name}</span>
+                  <div key={i} className="flex items-center justify-between text-xs bg-gray-50 p-3 rounded-lg border border-gray-100 group hover:bg-gray-100 transition-colors cursor-pointer">
+                    <div className="flex items-center gap-2 overflow-hidden" onClick={() => downloadDocument(doc)}>
+                       <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${doc.type === 'hr_upload' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-200 text-gray-500'}`}>
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                       </div>
+                       <div>
+                           <span className="truncate max-w-[100px] font-medium text-gray-700 block">{doc.name}</span>
+                           {doc.type === 'hr_upload' && <span className="text-[8px] uppercase text-indigo-500 font-bold">HR Upload</span>}
+                       </div>
                     </div>
                     <button onClick={() => handleRemoveDocument(i)} className="text-gray-400 hover:text-red-500">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -176,7 +201,7 @@ export const CandidatePortal: React.FC<CandidatePortalProps> = ({ jobs }) => {
               <button 
                 onClick={analyzeProfile}
                 disabled={documents.length === 0 || isProcessing}
-                className={`w-full py-3 rounded-xl font-bold text-white shadow-md transition-all flex justify-center items-center gap-2
+                className={`w-full py-3 rounded-xl font-bold text-white shadow-md transition-all flex justify-center items-center gap-2 mt-2
                   ${documents.length === 0 || isProcessing ? 'bg-gray-300 cursor-not-allowed' : 'bg-indigo-900 hover:bg-indigo-800'}
                 `}
               >

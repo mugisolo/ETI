@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { UserRole } from '../types';
 
@@ -27,7 +28,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                 <p className="mt-6 text-lg leading-8 text-gray-300">
                   The definitive platform for Manpower Outsourcing, Regulatory Compliance, and Talent Development. We bridge the gap between talent and industry requirements in Uganda's Oil & Gas, Banking, Telecom, and Agriculture sectors.
                 </p>
-                <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                
+                {/* Login Buttons with ID for scrolling */}
+                <div id="role-selection" className="mt-8 flex flex-col sm:flex-row gap-4">
                   <button
                     onClick={() => onLogin('HR_MANAGER')}
                     className="rounded-lg bg-indigo-600 px-8 py-3 text-base font-bold text-white shadow-lg hover:bg-indigo-500 transition-all"

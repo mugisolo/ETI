@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Job, UserRole } from '../types';
 
@@ -27,6 +28,8 @@ export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJ
   const uniqueLocations = Array.from(new Set(jobs.map(j => j.location)));
   const uniqueCompanies = Array.from(new Set(jobs.map(j => j.company)));
   const uniqueTypes = Array.from(new Set(jobs.map(j => j.type)));
+
+  const isManagement = userRole === 'HR_MANAGER' || userRole === 'ADMIN';
 
   const filteredJobs = useMemo(() => {
     let result = jobs.filter(job => {
@@ -75,10 +78,10 @@ export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJ
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Job Opportunities</h1>
           <p className="text-gray-500 text-lg mt-1">
-            {userRole === 'HR_MANAGER' ? 'Manage recruitment for partner organizations.' : 'Available positions in Uganda.'}
+            {isManagement ? 'Manage recruitment for partner organizations.' : 'Available positions in Uganda.'}
           </p>
         </div>
-        {userRole === 'HR_MANAGER' && (
+        {isManagement && (
           <button
             onClick={() => setShowForm(!showForm)}
             className="bg-indigo-900 text-white px-6 py-3 rounded-lg text-base font-bold hover:bg-indigo-800 shadow-md hover:shadow-lg transition-all"
@@ -88,8 +91,8 @@ export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJ
         )}
       </div>
 
-      {/* Job Posting Form (HR Only) */}
-      {showForm && userRole === 'HR_MANAGER' && (
+      {/* Job Posting Form (HR & Admin Only) */}
+      {showForm && isManagement && (
         <div className="bg-white p-8 rounded-2xl shadow-lg border border-indigo-100 mb-10 ring-1 ring-indigo-50 animate-fade-in-down">
           <h3 className="font-bold text-xl mb-6 text-indigo-900">Create Job Listing</h3>
           <form onSubmit={handleSubmit} className="space-y-6">

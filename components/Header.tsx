@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { AppView, UserRole } from '../types';
 
@@ -6,17 +7,26 @@ interface HeaderProps {
   onNavigate: (view: AppView) => void;
   userRole: UserRole;
   onLogout: () => void;
+  onLogin: (role: UserRole) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, userRole, onLogout }) => {
+export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, userRole, onLogout, onLogin }) => {
   const isLoggedIn = userRole !== null;
+  const isManagement = userRole === 'HR_MANAGER' || userRole === 'ADMIN';
+
+  const handleScrollToLogin = () => {
+    const element = document.getElementById('role-selection');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           {/* Logo Section */}
-          <div className="flex items-center cursor-pointer gap-3" onClick={() => onNavigate(isLoggedIn ? (userRole === 'HR_MANAGER' ? AppView.DASHBOARD : AppView.CANDIDATE_PORTAL) : AppView.LANDING)}>
+          <div className="flex items-center cursor-pointer gap-3" onClick={() => onNavigate(isLoggedIn ? (isManagement ? AppView.DASHBOARD : AppView.CANDIDATE_PORTAL) : AppView.LANDING)}>
             {/* Custom Logo */}
             <div className="h-12 w-12 bg-gradient-to-br from-indigo-900 to-indigo-700 rounded-lg flex items-center justify-center shadow-md text-white">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
@@ -35,8 +45,8 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, userRol
             </div>
           </div>
 
-          {/* Navigation - HR MANAGER */}
-          {userRole === 'HR_MANAGER' && (
+          {/* Navigation - MANAGEMENT (HR / ADMIN) */}
+          {isManagement && (
             <nav className="hidden md:flex space-x-8">
               <button onClick={() => onNavigate(AppView.DASHBOARD)} className={`${currentView === AppView.DASHBOARD ? 'text-indigo-900 border-b-2 border-indigo-900' : 'text-gray-500 hover:text-gray-700'} px-1 py-6 text-base font-medium transition-colors`}>
                 Dashboard
@@ -50,6 +60,13 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, userRol
               <button onClick={() => onNavigate(AppView.JOBS)} className={`${currentView === AppView.JOBS ? 'text-indigo-900 border-b-2 border-indigo-900' : 'text-gray-500 hover:text-gray-700'} px-1 py-6 text-base font-medium transition-colors`}>
                 Job Management
               </button>
+              
+              {/* Admin Specific Link */}
+              {userRole === 'ADMIN' && (
+                 <button onClick={() => onNavigate(AppView.ADMIN_PANEL)} className={`${currentView === AppView.ADMIN_PANEL ? 'text-red-600 border-b-2 border-red-600' : 'text-gray-500 hover:text-gray-700'} px-1 py-6 text-base font-medium transition-colors`}>
+                   System Admin
+                 </button>
+              )}
             </nav>
           )}
 
@@ -69,7 +86,9 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, userRol
           <div className="flex items-center gap-5">
             {isLoggedIn && (
                <div className="text-sm text-right hidden sm:block leading-tight">
-                  <p className="font-bold text-gray-700">{userRole === 'HR_MANAGER' ? 'HR Admin' : 'Candidate'}</p>
+                  <p className="font-bold text-gray-700">
+                    {userRole === 'ADMIN' ? 'System Admin' : userRole === 'HR_MANAGER' ? 'HR Admin' : 'Candidate'}
+                  </p>
                   <p className="text-gray-400 text-xs">Logged In</p>
                </div>
             )}
@@ -81,12 +100,20 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, userRol
                 Sign Out
               </button>
             ) : (
-              <button
-                onClick={() => alert('Please select a role below.')}
-                className="text-indigo-600 font-semibold text-base"
-              >
-                Login
-              </button>
+              <div className="flex items-center gap-4">
+                 <button
+                    onClick={() => onLogin('ADMIN')}
+                    className="text-gray-500 hover:text-gray-900 text-sm font-bold uppercase tracking-wide hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors"
+                 >
+                    System Admin
+                 </button>
+                 <button
+                    onClick={handleScrollToLogin}
+                    className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-bold shadow-sm hover:bg-indigo-500 transition-all"
+                 >
+                    Login
+                 </button>
+              </div>
             )}
           </div>
         </div>
@@ -95,11 +122,12 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, userRol
       {/* Mobile Menu */}
       {isLoggedIn && (
         <div className="md:hidden border-t border-gray-100 bg-gray-50 flex justify-around p-3 overflow-x-auto">
-           {userRole === 'HR_MANAGER' ? (
+           {isManagement ? (
              <>
                 <button onClick={() => onNavigate(AppView.DASHBOARD)} className="p-2 text-sm font-semibold text-gray-600 whitespace-nowrap">Dashboard</button>
                 <button onClick={() => onNavigate(AppView.SCANNER)} className="p-2 text-sm font-semibold text-indigo-700 whitespace-nowrap">New Scan</button>
                 <button onClick={() => onNavigate(AppView.JOBS)} className="p-2 text-sm font-semibold text-gray-600 whitespace-nowrap">Jobs</button>
+                {userRole === 'ADMIN' && <button onClick={() => onNavigate(AppView.ADMIN_PANEL)} className="p-2 text-sm font-semibold text-red-600 whitespace-nowrap">Admin</button>}
              </>
            ) : (
              <>

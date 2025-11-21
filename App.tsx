@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { LandingPage } from './components/LandingPage';
@@ -8,6 +9,7 @@ import { CandidatesList } from './components/CandidatesList';
 import { JobListings } from './components/JobListings';
 import { CandidatePortal } from './components/CandidatePortal';
 import { AiAssistant } from './components/AiAssistant';
+import { AdminPanel } from './components/AdminPanel';
 import { AppView, Candidate, UserRole, Job } from './types';
 
 // Mock initial jobs
@@ -47,7 +49,14 @@ const App: React.FC = () => {
 
   const handleLogin = (role: UserRole) => {
     setUserRole(role);
-    setCurrentView(role === 'HR_MANAGER' ? AppView.DASHBOARD : AppView.CANDIDATE_PORTAL);
+    // Default views based on role
+    if (role === 'ADMIN') {
+        setCurrentView(AppView.ADMIN_PANEL);
+    } else if (role === 'HR_MANAGER') {
+        setCurrentView(AppView.DASHBOARD);
+    } else {
+        setCurrentView(AppView.CANDIDATE_PORTAL);
+    }
   };
 
   const handleLogout = () => {
@@ -80,8 +89,10 @@ const App: React.FC = () => {
       return <LandingPage onLogin={handleLogin} />;
     }
 
+    const isManagement = userRole === 'HR_MANAGER' || userRole === 'ADMIN';
+
     // If a candidate is selected, show their report (Profile View)
-    if (selectedCandidate && userRole === 'HR_MANAGER') {
+    if (selectedCandidate && isManagement) {
       return <CandidateReport 
         candidate={selectedCandidate} 
         onClose={handleCloseReport} 
@@ -91,15 +102,17 @@ const App: React.FC = () => {
 
     switch (currentView) {
       case AppView.DASHBOARD:
-        return userRole === 'HR_MANAGER' ? <Dashboard candidates={candidates} /> : <CandidatePortal jobs={jobs} />;
+        return isManagement ? <Dashboard candidates={candidates} /> : <CandidatePortal jobs={jobs} />;
       case AppView.SCANNER:
-        return userRole === 'HR_MANAGER' ? <ScannerView onAnalysisComplete={handleAnalysisComplete} /> : null;
+        return isManagement ? <ScannerView onAnalysisComplete={handleAnalysisComplete} /> : null;
       case AppView.CANDIDATES:
-        return userRole === 'HR_MANAGER' ? <CandidatesList candidates={candidates} onViewProfile={handleViewProfile} /> : null;
+        return isManagement ? <CandidatesList candidates={candidates} onViewProfile={handleViewProfile} /> : null;
       case AppView.JOBS:
         return <JobListings userRole={userRole} jobs={jobs} onAddJob={(j) => setJobs(prev => [j, ...prev])} />;
       case AppView.CANDIDATE_PORTAL:
         return <CandidatePortal jobs={jobs} />;
+      case AppView.ADMIN_PANEL:
+        return userRole === 'ADMIN' ? <AdminPanel /> : <Dashboard candidates={candidates} />;
       default:
         return <Dashboard candidates={candidates} />;
     }
@@ -112,6 +125,7 @@ const App: React.FC = () => {
         onNavigate={(view) => { setSelectedCandidate(null); setCurrentView(view); }} 
         userRole={userRole} 
         onLogout={handleLogout} 
+        onLogin={handleLogin}
       />
       <main className="pt-6 pb-20">
         {renderContent()}

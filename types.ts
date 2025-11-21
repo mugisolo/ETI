@@ -6,14 +6,15 @@ export enum AppView {
   CANDIDATES = 'CANDIDATES',
   JOBS = 'JOBS',
   CANDIDATE_PORTAL = 'CANDIDATE_PORTAL',
-  OSINT_VIEW = 'OSINT_VIEW'
+  OSINT_VIEW = 'OSINT_VIEW',
+  ADMIN_PANEL = 'ADMIN_PANEL'
 }
 
-export type UserRole = 'HR_MANAGER' | 'CANDIDATE' | null;
+export type UserRole = 'ADMIN' | 'HR_MANAGER' | 'CANDIDATE' | null;
 
 export interface CandidateDocument {
   name: string;
-  type: string; // 'id', 'lc1_letter', 'certificate', 'cv'
+  type: string; // 'id', 'lc1_letter', 'certificate', 'cv', 'hr_upload'
   base64: string;
   mimeType: string;
 }

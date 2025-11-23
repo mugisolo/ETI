@@ -89,7 +89,7 @@ export const CandidateReport: React.FC<CandidateReportProps> = ({ candidate, onC
       <div className="mb-6 flex items-center justify-between">
         <button onClick={onClose} className="text-sm text-gray-500 hover:text-indigo-900 flex items-center gap-2 font-bold transition-colors">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-          Back to Applicants
+          Back to Dashboard
         </button>
         <span className="text-xs font-mono text-gray-400">REF: {candidate.id}</span>
       </div>
@@ -146,14 +146,30 @@ export const CandidateReport: React.FC<CandidateReportProps> = ({ candidate, onC
         <div className="p-8 bg-gray-50 border-b border-gray-200">
            <h3 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Compliance & Identity Audit</h3>
            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                 <p className="text-xs text-gray-400 font-bold uppercase">Integrity Score</p>
-                 <div className="mt-2 flex items-end gap-2">
-                    <span className={`text-4xl font-black ${report.integrityScore > 80 ? 'text-emerald-600' : 'text-yellow-600'}`}>{report.integrityScore}</span>
-                    <span className="text-sm text-gray-400 mb-1">/ 100</span>
+              <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-center items-center relative overflow-hidden">
+                 <p className="text-xs text-gray-400 font-bold uppercase absolute top-6 left-6">Integrity Score</p>
+                 
+                 {/* Circular Gauge integrated from OsintView for better optimization */}
+                 <div className="relative w-32 h-32 flex items-center justify-center mt-4">
+                   <svg className="w-full h-full transform -rotate-90">
+                     <circle cx="64" cy="64" r="56" stroke="#f3f4f6" strokeWidth="8" fill="none" />
+                     <circle 
+                        cx="64" cy="64" r="56" 
+                        stroke={report.integrityScore > 80 ? '#10b981' : report.integrityScore > 50 ? '#eab308' : '#ef4444'} 
+                        strokeWidth="8" 
+                        fill="none" 
+                        strokeDasharray={351} 
+                        strokeDashoffset={351 - (351 * report.integrityScore) / 100} 
+                        className="transition-all duration-1000 ease-out"
+                     />
+                   </svg>
+                   <div className="absolute text-center">
+                      <span className={`text-3xl font-black ${report.integrityScore > 80 ? 'text-emerald-600' : 'text-yellow-600'}`}>{report.integrityScore}</span>
+                      <span className="block text-[10px] text-gray-400 font-bold">/ 100</span>
+                   </div>
                  </div>
-                 <p className="text-xs text-gray-500 mt-2">Based on ID & Doc Consistency</p>
               </div>
+              
               <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm md:col-span-2">
                  <p className="text-xs text-gray-400 font-bold uppercase">Audit Summary</p>
                  <p className="text-gray-700 mt-2 text-sm leading-relaxed">{report.auditNotes}</p>

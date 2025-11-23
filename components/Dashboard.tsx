@@ -1,11 +1,13 @@
+
 import React from 'react';
 import { Candidate } from '../types';
 
 interface DashboardProps {
   candidates: Candidate[];
+  onViewProfile: (candidate: Candidate) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ candidates }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ candidates, onViewProfile }) => {
   const totalCandidates = candidates.length;
   const verified = candidates.filter(c => c.status === 'VERIFIED').length;
   const hostCommunity = candidates.filter(c => c.report?.isHostCommunity).length;
@@ -74,8 +76,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ candidates }) => {
                 </tr>
               ) : (
                 candidates.slice(0, 5).map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-8 py-5 whitespace-nowrap">
+                  <tr key={c.id} onClick={() => onViewProfile(c)} className="hover:bg-gray-50 transition-colors cursor-pointer group">
+                    <td className="px-8 py-5 whitespace-nowrap group-hover:text-indigo-900 transition-colors">
                       <div className="font-bold text-gray-900 text-base">{c.name}</div>
                       <div className="text-sm text-gray-500">ID: {c.id}</div>
                     </td>

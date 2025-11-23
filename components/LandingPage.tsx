@@ -23,7 +23,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                 </div>
                 <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl leading-tight">
                   Intelligent Compliance <br/>
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-emerald-400">& Workforce Solutions</span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-emerald-400">Workforce & Solutions</span>
                 </h1>
                 <p className="mt-6 text-lg leading-8 text-gray-300">
                   The definitive platform for Manpower Outsourcing, Regulatory Compliance, and Talent Development. We bridge the gap between talent and industry requirements in Uganda's Oil & Gas, Banking, Telecom, and Agriculture sectors.

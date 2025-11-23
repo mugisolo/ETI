@@ -102,7 +102,9 @@ const App: React.FC = () => {
 
     switch (currentView) {
       case AppView.DASHBOARD:
-        return isManagement ? <Dashboard candidates={candidates} /> : <CandidatePortal jobs={jobs} />;
+        return isManagement 
+          ? <Dashboard candidates={candidates} onViewProfile={handleViewProfile} /> 
+          : <CandidatePortal jobs={jobs} />;
       case AppView.SCANNER:
         return isManagement ? <ScannerView onAnalysisComplete={handleAnalysisComplete} /> : null;
       case AppView.CANDIDATES:
@@ -112,9 +114,9 @@ const App: React.FC = () => {
       case AppView.CANDIDATE_PORTAL:
         return <CandidatePortal jobs={jobs} />;
       case AppView.ADMIN_PANEL:
-        return userRole === 'ADMIN' ? <AdminPanel /> : <Dashboard candidates={candidates} />;
+        return userRole === 'ADMIN' ? <AdminPanel /> : <Dashboard candidates={candidates} onViewProfile={handleViewProfile} />;
       default:
-        return <Dashboard candidates={candidates} />;
+        return <Dashboard candidates={candidates} onViewProfile={handleViewProfile} />;
     }
   };
 

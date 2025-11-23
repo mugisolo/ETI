@@ -12,11 +12,11 @@ export const AdminPanel: React.FC = () => {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   // Mock data for system management
-  const hrUsers = [
+  const [hrUsers, setHrUsers] = useState([
     { id: 1, name: 'Sarah Jenkins', email: 's.jenkins@salus.co.ug', status: 'Active', role: 'HR Manager', lastLogin: '2 mins ago' },
     { id: 2, name: 'David Okello', email: 'd.okello@hrbl.co.ug', status: 'Active', role: 'Recruiter', lastLogin: '1 hour ago' },
     { id: 3, name: 'Pending User', email: 'new.hr@partner.com', status: 'Pending Approval', role: '-', lastLogin: '-' },
-  ];
+  ]);
 
   const systemLogs = [
     { id: 101, action: 'API_CALL_GEMINI', user: 'SYSTEM', status: 'SUCCESS', time: '10:42:01 AM' },
@@ -25,6 +25,35 @@ export const AdminPanel: React.FC = () => {
     { id: 104, action: 'LOGIN_ADMIN', user: 'SysAdmin', status: 'SUCCESS', time: '08:00:00 AM' },
     { id: 105, action: 'JOB_POST_CREATE', user: 'Sarah Jenkins', status: 'SUCCESS', time: 'Yesterday' },
   ];
+
+  const handleExport = () => {
+    const csvContent = "data:text/csv;charset=utf-8," 
+        + "ID,Action,User,Status,Time\n"
+        + systemLogs.map(e => `${e.id},${e.action},${e.user},${e.status},${e.time}`).join("\n");
+    
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "eti_system_logs.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleAddUser = () => {
+    const name = window.prompt("Enter new user name:");
+    if (name) {
+        const newUser = {
+            id: hrUsers.length + 1,
+            name: name,
+            email: `${name.toLowerCase().replace(' ', '.')}@salus.co.ug`,
+            status: 'Active',
+            role: 'Recruiter',
+            lastLogin: 'Never'
+        };
+        setHrUsers([...hrUsers, newUser]);
+    }
+  };
 
   return (
     <div className="max-w-7xl mx-auto p-8 animate-in fade-in zoom-in-95 duration-500">
@@ -85,7 +114,10 @@ export const AdminPanel: React.FC = () => {
                     </svg>
                     System Audit Logs
                 </h2>
-                <button className="text-sm text-indigo-600 font-bold hover:bg-indigo-50 px-3 py-1 rounded">
+                <button 
+                  onClick={handleExport}
+                  className="text-sm text-indigo-600 font-bold hover:bg-indigo-50 px-3 py-1 rounded transition-colors"
+                >
                   Export CSV
                 </button>
              </div>
@@ -118,7 +150,10 @@ export const AdminPanel: React.FC = () => {
                 </svg>
                 HR & Partner Account Management
             </h2>
-            <button className="text-sm bg-indigo-900 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-800 transition-colors shadow-md">
+            <button 
+              onClick={handleAddUser}
+              className="text-sm bg-indigo-900 text-white px-4 py-2 rounded-lg font-bold hover:bg-indigo-800 transition-colors shadow-md"
+            >
               + Add New User
             </button>
           </div>
@@ -222,7 +257,10 @@ export const AdminPanel: React.FC = () => {
            </div>
            
            <div className="mt-8 pt-6 border-t border-gray-100 flex justify-end">
-              <button className="bg-indigo-900 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-800 transition-colors shadow-md">
+              <button 
+                onClick={() => window.alert("Settings saved successfully.")}
+                className="bg-indigo-900 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-800 transition-colors shadow-md"
+              >
                  Save Configuration
               </button>
            </div>

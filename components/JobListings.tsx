@@ -10,6 +10,7 @@ interface JobListingsProps {
 
 export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJob }) => {
   const [showForm, setShowForm] = useState(false);
+  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
   const [newJob, setNewJob] = useState<Partial<Job>>({
     title: '',
     company: '',
@@ -26,8 +27,17 @@ export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJ
 
   // Derived Lists for Dropdowns
   const uniqueLocations = Array.from(new Set(jobs.map(j => j.location)));
-  const uniqueCompanies = Array.from(new Set(jobs.map(j => j.company)));
   const uniqueTypes = Array.from(new Set(jobs.map(j => j.type)));
+  
+  // Calculate Company Counts for the Filter
+  const uniqueCompanies = useMemo(() => {
+    const companies = jobs.map(j => j.company);
+    const unique = Array.from(new Set(companies));
+    return unique.map(company => ({
+      name: company,
+      count: jobs.filter(j => j.company === company).length
+    }));
+  }, [jobs]);
 
   const isManagement = userRole === 'HR_MANAGER' || userRole === 'ADMIN';
 
@@ -46,8 +56,6 @@ export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJ
         } else if (sortOrder === 'oldest') {
             return new Date(a.postedDate).getTime() - new Date(b.postedDate).getTime();
         }
-        // For 'relevance', effectively no-op in this view as relevance is calculated in CandidatePortal
-        // but we can sort alphabetically as fallback or keep default
         return 0;
     });
 
@@ -70,6 +78,15 @@ export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJ
       setShowForm(false);
       setNewJob({ title: '', company: '', location: 'Kampala, Uganda', type: 'Full-time', description: '' });
     }
+  };
+
+  const toggleApply = (id: string) => {
+    setAppliedJobs(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+    });
   };
 
   return (
@@ -190,7 +207,7 @@ export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJ
                   </select>
                </div>
 
-               {/* Company Filter */}
+               {/* Company Filter - With Counts */}
                <div className="mb-5">
                   <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Company</label>
                   <select 
@@ -199,7 +216,11 @@ export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJ
                     className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                   >
                      <option value="">All Companies</option>
-                     {uniqueCompanies.map(c => <option key={c} value={c}>{c}</option>)}
+                     {uniqueCompanies.map(c => (
+                        <option key={c.name} value={c.name}>
+                           {c.name} ({c.count})
+                        </option>
+                     ))}
                   </select>
                </div>
 
@@ -257,8 +278,15 @@ export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJ
                           </div>
                         </div>
                         {userRole === 'CANDIDATE' && (
-                          <button className="bg-white border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 px-6 py-2 rounded-lg text-sm font-bold transition-colors">
-                            Apply Now
+                          <button 
+                            onClick={() => toggleApply(job.id)}
+                            className={`border-2 px-6 py-2 rounded-lg text-sm font-bold transition-colors ${
+                                appliedJobs.has(job.id) 
+                                ? 'bg-emerald-500 text-white border-emerald-500' 
+                                : 'bg-white border-emerald-600 text-emerald-600 hover:bg-emerald-50'
+                            }`}
+                          >
+                            {appliedJobs.has(job.id) ? 'Applied ✓' : 'Apply Now'}
                           </button>
                         )}
                       </div>

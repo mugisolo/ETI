@@ -16,6 +16,7 @@ export const CandidatePortal: React.FC<CandidatePortalProps> = ({ jobs, initialC
   const [osintResult, setOsintResult] = useState<OsintReport | null>(initialCandidate?.osint || null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isOsintProcessing, setIsOsintProcessing] = useState(false);
+  const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -110,6 +111,15 @@ export const CandidatePortal: React.FC<CandidatePortalProps> = ({ jobs, initialC
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const toggleApply = (id: string) => {
+    setAppliedJobs(prev => {
+        const next = new Set(prev);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        return next;
+    });
   };
 
   return (
@@ -348,8 +358,15 @@ export const CandidatePortal: React.FC<CandidatePortalProps> = ({ jobs, initialC
                               {rec.overallScore}%
                            </div>
                         </div>
-                        <button className="text-sm bg-gray-900 text-white px-6 py-3 rounded-lg hover:bg-gray-800 w-full md:w-auto font-bold shadow-lg transform transition-transform hover:-translate-y-0.5">
-                           Apply
+                        <button 
+                           onClick={() => toggleApply(job.id)}
+                           className={`text-sm w-full md:w-auto px-6 py-3 rounded-lg font-bold shadow-lg transform transition-transform hover:-translate-y-0.5 ${
+                             appliedJobs.has(job.id)
+                               ? 'bg-emerald-600 text-white hover:bg-emerald-500'
+                               : 'bg-gray-900 text-white hover:bg-gray-800'
+                           }`}
+                        >
+                           {appliedJobs.has(job.id) ? 'Applied' : 'Apply'}
                         </button>
                      </div>
                   </div>

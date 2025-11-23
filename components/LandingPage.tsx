@@ -33,13 +33,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                 <div id="role-selection" className="mt-8 flex flex-col sm:flex-row gap-4">
                   <button
                     onClick={() => onLogin('HR_MANAGER')}
-                    className="rounded-lg bg-indigo-600 px-8 py-3 text-base font-bold text-white shadow-lg hover:bg-indigo-500 transition-all"
+                    className="rounded-lg bg-indigo-600 px-8 py-3 text-base font-bold text-white shadow-lg hover:bg-indigo-50 transition-all"
                   >
                     Corporate HR Login
                   </button>
                   <button
                     onClick={() => onLogin('CANDIDATE')}
-                    className="rounded-lg bg-emerald-600 px-8 py-3 text-base font-bold text-white shadow-lg hover:bg-emerald-500 transition-all"
+                    className="rounded-lg bg-emerald-600 px-8 py-3 text-base font-bold text-white shadow-lg hover:bg-emerald-50 transition-all"
                   >
                     Candidate Portal
                   </button>

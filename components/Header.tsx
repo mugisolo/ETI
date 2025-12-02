@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { AppView, UserRole } from '../types';
 
@@ -22,24 +21,24 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, userRol
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-sm transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-24">
           {/* Logo Section */}
-          <div className="flex items-center cursor-pointer gap-3" onClick={() => onNavigate(isLoggedIn ? (isManagement ? AppView.DASHBOARD : AppView.CANDIDATE_PORTAL) : AppView.LANDING)}>
-            {/* Custom Logo */}
-            <div className="h-12 w-12 bg-gradient-to-br from-indigo-900 to-indigo-700 rounded-lg flex items-center justify-center shadow-md text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+          <div className="flex items-center cursor-pointer gap-4" onClick={() => onNavigate(isLoggedIn ? (isManagement ? AppView.DASHBOARD : AppView.CANDIDATE_PORTAL) : AppView.LANDING)}>
+            {/* Custom Logo - Gold & Black Theme */}
+            <div className="h-14 w-14 bg-stone-900 rounded-none flex items-center justify-center shadow-lg text-gold-500 border border-gold-500">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
                 </svg>
             </div>
             <div className="flex flex-col">
               <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-gray-900 tracking-tight">
-                  <span className="text-indigo-900">Equatorial</span> <span className="text-emerald-600">Talent</span>
+                <span className="text-2xl font-serif font-bold text-stone-900 tracking-tight">
+                  <span className="text-stone-900">Equatorial</span> <span className="text-gold-600">Talent</span>
                 </span>
               </div>
-              <span className="text-[0.7rem] uppercase tracking-widest text-gray-500 font-semibold">
+              <span className="text-[0.65rem] uppercase tracking-[0.2em] text-stone-500 font-bold">
                 Intelligence
               </span>
             </div>
@@ -47,24 +46,24 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, userRol
 
           {/* Navigation - MANAGEMENT (HR / ADMIN) */}
           {isManagement && (
-            <nav className="hidden md:flex space-x-8">
-              <button onClick={() => onNavigate(AppView.DASHBOARD)} className={`${currentView === AppView.DASHBOARD ? 'text-indigo-900 border-b-2 border-indigo-900' : 'text-gray-500 hover:text-gray-700'} px-1 py-6 text-base font-medium transition-colors`}>
+            <nav className="hidden md:flex space-x-10">
+              <button onClick={() => onNavigate(AppView.DASHBOARD)} className={`${currentView === AppView.DASHBOARD ? 'text-gold-600 border-b-2 border-gold-600' : 'text-stone-500 hover:text-gold-600'} py-2 text-sm font-bold uppercase tracking-wide transition-colors`}>
                 Dashboard
               </button>
-              <button onClick={() => onNavigate(AppView.SCANNER)} className={`${currentView === AppView.SCANNER ? 'text-indigo-900 border-b-2 border-indigo-900' : 'text-gray-500 hover:text-gray-700'} px-1 py-6 text-base font-medium transition-colors`}>
-                Compliance Scan
+              <button onClick={() => onNavigate(AppView.SCANNER)} className={`${currentView === AppView.SCANNER ? 'text-gold-600 border-b-2 border-gold-600' : 'text-stone-500 hover:text-gold-600'} py-2 text-sm font-bold uppercase tracking-wide transition-colors`}>
+                Compliance
               </button>
-              <button onClick={() => onNavigate(AppView.CANDIDATES)} className={`${currentView === AppView.CANDIDATES ? 'text-indigo-900 border-b-2 border-indigo-900' : 'text-gray-500 hover:text-gray-700'} px-1 py-6 text-base font-medium transition-colors`}>
+              <button onClick={() => onNavigate(AppView.CANDIDATES)} className={`${currentView === AppView.CANDIDATES ? 'text-gold-600 border-b-2 border-gold-600' : 'text-stone-500 hover:text-gold-600'} py-2 text-sm font-bold uppercase tracking-wide transition-colors`}>
                 Records
               </button>
-              <button onClick={() => onNavigate(AppView.JOBS)} className={`${currentView === AppView.JOBS ? 'text-indigo-900 border-b-2 border-indigo-900' : 'text-gray-500 hover:text-gray-700'} px-1 py-6 text-base font-medium transition-colors`}>
-                Job Management
+              <button onClick={() => onNavigate(AppView.JOBS)} className={`${currentView === AppView.JOBS ? 'text-gold-600 border-b-2 border-gold-600' : 'text-stone-500 hover:text-gold-600'} py-2 text-sm font-bold uppercase tracking-wide transition-colors`}>
+                Jobs
               </button>
               
               {/* Admin Specific Link */}
               {userRole === 'ADMIN' && (
-                 <button onClick={() => onNavigate(AppView.ADMIN_PANEL)} className={`${currentView === AppView.ADMIN_PANEL ? 'text-red-600 border-b-2 border-red-600' : 'text-gray-500 hover:text-gray-700'} px-1 py-6 text-base font-medium transition-colors`}>
-                   System Admin
+                 <button onClick={() => onNavigate(AppView.ADMIN_PANEL)} className={`${currentView === AppView.ADMIN_PANEL ? 'text-red-700 border-b-2 border-red-700' : 'text-stone-500 hover:text-red-700'} py-2 text-sm font-bold uppercase tracking-wide transition-colors`}>
+                   Admin
                  </button>
               )}
             </nav>
@@ -72,30 +71,30 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, userRol
 
           {/* Navigation - CANDIDATE */}
           {userRole === 'CANDIDATE' && (
-            <nav className="hidden md:flex space-x-8">
-              <button onClick={() => onNavigate(AppView.CANDIDATE_PORTAL)} className={`${currentView === AppView.CANDIDATE_PORTAL ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-gray-500 hover:text-gray-700'} px-1 py-6 text-base font-medium transition-colors`}>
+            <nav className="hidden md:flex space-x-10">
+              <button onClick={() => onNavigate(AppView.CANDIDATE_PORTAL)} className={`${currentView === AppView.CANDIDATE_PORTAL ? 'text-gold-600 border-b-2 border-gold-600' : 'text-stone-500 hover:text-gold-600'} py-2 text-sm font-bold uppercase tracking-wide transition-colors`}>
                 My Profile
               </button>
-              <button onClick={() => onNavigate(AppView.JOBS)} className={`${currentView === AppView.JOBS ? 'text-emerald-600 border-b-2 border-emerald-600' : 'text-gray-500 hover:text-gray-700'} px-1 py-6 text-base font-medium transition-colors`}>
+              <button onClick={() => onNavigate(AppView.JOBS)} className={`${currentView === AppView.JOBS ? 'text-gold-600 border-b-2 border-gold-600' : 'text-stone-500 hover:text-gold-600'} py-2 text-sm font-bold uppercase tracking-wide transition-colors`}>
                 Find Jobs
               </button>
             </nav>
           )}
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-5">
+          <div className="flex items-center gap-6">
             {isLoggedIn && (
-               <div className="text-sm text-right hidden sm:block leading-tight">
-                  <p className="font-bold text-gray-700">
-                    {userRole === 'ADMIN' ? 'System Admin' : userRole === 'HR_MANAGER' ? 'HR Admin' : 'Candidate'}
+               <div className="text-right hidden sm:block leading-tight">
+                  <p className="font-serif font-bold text-stone-900 text-lg">
+                    {userRole === 'ADMIN' ? 'System Admin' : userRole === 'HR_MANAGER' ? 'HR Director' : 'Candidate'}
                   </p>
-                  <p className="text-gray-400 text-xs">Logged In</p>
+                  <p className="text-gold-600 text-xs font-bold uppercase tracking-widest">Logged In</p>
                </div>
             )}
             {isLoggedIn ? (
               <button
                 onClick={onLogout}
-                className="text-gray-500 hover:text-red-600 text-base font-medium border-l border-gray-200 pl-5"
+                className="text-stone-500 hover:text-red-600 text-sm font-bold uppercase tracking-wider border-l border-stone-200 pl-6"
               >
                 Sign Out
               </button>
@@ -103,15 +102,15 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, userRol
               <div className="flex items-center gap-4">
                  <button
                     onClick={() => onLogin('ADMIN')}
-                    className="text-gray-500 hover:text-gray-900 text-sm font-bold uppercase tracking-wide hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors"
+                    className="text-stone-500 hover:text-gold-600 text-xs font-bold uppercase tracking-widest hover:bg-stone-50 px-4 py-2 rounded transition-colors"
                  >
                     System Admin
                  </button>
                  <button
                     onClick={handleScrollToLogin}
-                    className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-bold shadow-sm hover:bg-indigo-500 transition-all"
+                    className="bg-gold-500 text-white px-6 py-3 rounded-none font-bold uppercase tracking-widest text-xs shadow-md hover:bg-gold-600 hover:shadow-lg transition-all"
                  >
-                    Login
+                    Client Login
                  </button>
               </div>
             )}
@@ -121,18 +120,18 @@ export const Header: React.FC<HeaderProps> = ({ currentView, onNavigate, userRol
       
       {/* Mobile Menu */}
       {isLoggedIn && (
-        <div className="md:hidden border-t border-gray-100 bg-gray-50 flex justify-around p-3 overflow-x-auto">
+        <div className="md:hidden border-t border-stone-200 bg-ivory-50 flex justify-around p-3 overflow-x-auto">
            {isManagement ? (
              <>
-                <button onClick={() => onNavigate(AppView.DASHBOARD)} className="p-2 text-sm font-semibold text-gray-600 whitespace-nowrap">Dashboard</button>
-                <button onClick={() => onNavigate(AppView.SCANNER)} className="p-2 text-sm font-semibold text-indigo-700 whitespace-nowrap">New Scan</button>
-                <button onClick={() => onNavigate(AppView.JOBS)} className="p-2 text-sm font-semibold text-gray-600 whitespace-nowrap">Jobs</button>
-                {userRole === 'ADMIN' && <button onClick={() => onNavigate(AppView.ADMIN_PANEL)} className="p-2 text-sm font-semibold text-red-600 whitespace-nowrap">Admin</button>}
+                <button onClick={() => onNavigate(AppView.DASHBOARD)} className="p-2 text-xs font-bold uppercase text-stone-600 whitespace-nowrap">Dashboard</button>
+                <button onClick={() => onNavigate(AppView.SCANNER)} className="p-2 text-xs font-bold uppercase text-gold-600 whitespace-nowrap">Scan</button>
+                <button onClick={() => onNavigate(AppView.JOBS)} className="p-2 text-xs font-bold uppercase text-stone-600 whitespace-nowrap">Jobs</button>
+                {userRole === 'ADMIN' && <button onClick={() => onNavigate(AppView.ADMIN_PANEL)} className="p-2 text-xs font-bold uppercase text-red-600 whitespace-nowrap">Admin</button>}
              </>
            ) : (
              <>
-                <button onClick={() => onNavigate(AppView.CANDIDATE_PORTAL)} className="p-2 text-sm font-semibold text-gray-600 whitespace-nowrap">Profile</button>
-                <button onClick={() => onNavigate(AppView.JOBS)} className="p-2 text-sm font-semibold text-emerald-600 whitespace-nowrap">Jobs</button>
+                <button onClick={() => onNavigate(AppView.CANDIDATE_PORTAL)} className="p-2 text-xs font-bold uppercase text-stone-600 whitespace-nowrap">Profile</button>
+                <button onClick={() => onNavigate(AppView.JOBS)} className="p-2 text-xs font-bold uppercase text-gold-600 whitespace-nowrap">Jobs</button>
              </>
            )}
         </div>

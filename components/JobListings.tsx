@@ -1,15 +1,25 @@
-
 import React, { useState, useMemo } from 'react';
-import { Job, UserRole } from '../types';
+import { Job, UserRole, SourcingResult, Candidate } from '../types';
+import { generateSourcingStrategies, parseProfileText } from '../services/geminiService';
 
 interface JobListingsProps {
   userRole: UserRole;
   jobs: Job[];
   onAddJob: (job: Job) => void;
+  onImportCandidate?: (candidate: Candidate) => void;
 }
 
-export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJob }) => {
+export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJob, onImportCandidate }) => {
   const [showForm, setShowForm] = useState(false);
+  const [showSourcingModal, setShowSourcingModal] = useState(false);
+  const [viewJob, setViewJob] = useState<Job | null>(null);
+  const [selectedJobForSourcing, setSelectedJobForSourcing] = useState<Job | null>(null);
+  const [sourcingResult, setSourcingResult] = useState<SourcingResult | null>(null);
+  const [isSourcing, setIsSourcing] = useState(false);
+  const [isParsing, setIsParsing] = useState(false);
+  const [sourcingTab, setSourcingTab] = useState<'AUTO' | 'MANUAL'>('AUTO');
+  const [profileText, setProfileText] = useState('');
+
   const [appliedJobs, setAppliedJobs] = useState<Set<string>>(new Set());
   const [newJob, setNewJob] = useState<Partial<Job>>({
     title: '',
@@ -23,13 +33,12 @@ export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJ
   const [filterType, setFilterType] = useState('');
   const [filterLocation, setFilterLocation] = useState('');
   const [filterCompany, setFilterCompany] = useState('');
-  const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'oldest', 'relevance'
+  const [sortOrder, setSortOrder] = useState('newest');
 
-  // Derived Lists for Dropdowns
+  // Derived Lists
   const uniqueLocations = Array.from(new Set(jobs.map(j => j.location)));
   const uniqueTypes = Array.from(new Set(jobs.map(j => j.type)));
   
-  // Calculate Company Counts for the Filter
   const uniqueCompanies = useMemo(() => {
     const companies = jobs.map(j => j.company);
     const unique = Array.from(new Set(companies));
@@ -49,7 +58,6 @@ export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJ
       return matchType && matchLocation && matchCompany;
     });
 
-    // Sorting
     result.sort((a, b) => {
         if (sortOrder === 'newest') {
             return new Date(b.postedDate).getTime() - new Date(a.postedDate).getTime();
@@ -89,212 +97,357 @@ export const JobListings: React.FC<JobListingsProps> = ({ userRole, jobs, onAddJ
     });
   };
 
+  const handleSourceTalent = async (job: Job) => {
+    setSelectedJobForSourcing(job);
+    setShowSourcingModal(true);
+    setSourcingTab('AUTO');
+    setSourcingResult(null);
+    setIsSourcing(true);
+
+    try {
+        const result = await generateSourcingStrategies(job);
+        setSourcingResult(result);
+    } catch (e) {
+        console.error("Sourcing failed", e);
+    } finally {
+        setIsSourcing(false);
+    }
+  };
+
+  const handleImportCandidate = (match: any) => {
+    if (!onImportCandidate) return;
+    const newCandidate: Candidate = {
+        id: Math.random().toString(36).substring(7),
+        name: match.name,
+        role: match.currentRole,
+        status: 'PENDING',
+        source: 'LINKEDIN',
+        timestamp: new Date().toISOString(),
+        basicScore: 75,
+        report: {
+            candidateName: match.name,
+            districtOfOrigin: 'Unknown',
+            isHostCommunity: false,
+            certificationsValid: true,
+            integrityScore: 80,
+            riskAssessment: { level: 'LOW', reason: 'Sourced from LinkedIn professional network.' },
+            auditNotes: `Imported via LinkedIn X-Ray Search. Headline: ${match.headline}. Logic: ${match.matchExplanation}`,
+            missingDocuments: ['CV', 'National ID', 'Certifications']
+        }
+    };
+    onImportCandidate(newCandidate);
+    alert(`Imported ${match.name} to Applicant Tracking System.`);
+  };
+
+  const handleManualImport = async () => {
+    if (!profileText.trim()) return;
+    setIsParsing(true);
+    try {
+        const report = await parseProfileText(profileText);
+        if (onImportCandidate) {
+            const newCandidate: Candidate = {
+                id: Math.random().toString(36).substring(7),
+                name: report.candidateName || "Imported Candidate",
+                role: "Sourced Profile",
+                status: 'PENDING',
+                source: 'LINKEDIN',
+                timestamp: new Date().toISOString(),
+                basicScore: report.integrityScore,
+                report: report
+            };
+            onImportCandidate(newCandidate);
+            alert("Profile successfully parsed and imported.");
+            setProfileText('');
+            setShowSourcingModal(false);
+        }
+    } catch (e) {
+        alert("Failed to parse profile text. Please check the content and try again.");
+    } finally {
+        setIsParsing(false);
+    }
+  };
+
   return (
-    <div className="max-w-7xl mx-auto p-8">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div className="max-w-7xl mx-auto p-8 relative font-sans">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6 border-b border-stone-200 pb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Job Opportunities</h1>
-          <p className="text-gray-500 text-lg mt-1">
-            {isManagement ? 'Manage recruitment for partner organizations.' : 'Available positions in Uganda.'}
+          <h1 className="text-4xl font-serif font-bold text-stone-900">Executive Opportunities</h1>
+          <p className="text-stone-500 text-lg mt-2 font-light">
+            {isManagement ? 'Manage recruitment for partner organizations.' : 'Strategic positions in Uganda.'}
           </p>
         </div>
         {isManagement && (
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-indigo-900 text-white px-6 py-3 rounded-lg text-base font-bold hover:bg-indigo-800 shadow-md hover:shadow-lg transition-all"
-          >
-            {showForm ? 'Cancel Listing' : '+ Post New Job'}
-          </button>
+          <div className="flex gap-3">
+             <button
+                onClick={() => setShowForm(!showForm)}
+                className="bg-gold-600 text-white px-8 py-3 text-sm font-bold uppercase tracking-widest hover:bg-gold-700 shadow-md transition-all"
+            >
+                {showForm ? 'Cancel' : '+ New Position'}
+            </button>
+          </div>
         )}
       </div>
 
-      {/* Job Posting Form (HR & Admin Only) */}
-      {showForm && isManagement && (
-        <div className="bg-white p-8 rounded-2xl shadow-lg border border-indigo-100 mb-10 ring-1 ring-indigo-50 animate-fade-in-down">
-          <h3 className="font-bold text-xl mb-6 text-indigo-900">Create Job Listing</h3>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-1">Job Title</label>
-                 <input
-                    placeholder="e.g. Rig Welder"
-                    className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                    value={newJob.title}
-                    onChange={e => setNewJob({ ...newJob, title: e.target.value })}
-                    required
-                 />
-              </div>
-              <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
-                 <input
-                    placeholder="Company Name"
-                    className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                    value={newJob.company}
-                    onChange={e => setNewJob({ ...newJob, company: e.target.value })}
-                 />
-              </div>
-              <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                 <input
-                    placeholder="Location"
-                    className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                    value={newJob.location}
-                    onChange={e => setNewJob({ ...newJob, location: e.target.value })}
-                 />
-              </div>
-              <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-1">Job Type</label>
-                 <select
-                    className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white"
-                    value={newJob.type}
-                    onChange={e => setNewJob({ ...newJob, type: e.target.value as any })}
-                 >
-                    <option>Full-time</option>
-                    <option>Contract</option>
-                    <option>Casual</option>
-                 </select>
-              </div>
-            </div>
-            <div>
-                 <label className="block text-sm font-medium text-gray-700 mb-1">Description & Requirements</label>
-                 <textarea
-                    placeholder="Job Description & Requirements"
-                    className="border border-gray-300 p-3 rounded-lg w-full h-32 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                    value={newJob.description}
-                    onChange={e => setNewJob({ ...newJob, description: e.target.value })}
-                    required
-                 />
-            </div>
-            <button type="submit" className="bg-emerald-600 text-white px-8 py-3 rounded-lg font-bold hover:bg-emerald-700 shadow-md transition-all">
-              Publish Listing
-            </button>
-          </form>
-        </div>
+      {/* Sourcing Modal - Keeping existing logic but updating style */}
+      {showSourcingModal && selectedJobForSourcing && (
+          <div className="fixed inset-0 z-50 bg-stone-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+             <div className="bg-white shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                 <div className="p-6 border-b border-stone-100 flex justify-between items-center bg-stone-50">
+                     <div>
+                        <h2 className="text-xl font-serif font-bold text-stone-900">Talent Acquisition AI</h2>
+                        <p className="text-sm text-stone-500">Sourcing: <span className="font-bold text-gold-600">{selectedJobForSourcing.title}</span></p>
+                     </div>
+                     <button onClick={() => setShowSourcingModal(false)} className="text-stone-400 hover:text-stone-600">✕</button>
+                 </div>
+
+                 {/* Tab Navigation */}
+                 <div className="flex border-b border-stone-100 bg-white">
+                    <button 
+                        onClick={() => setSourcingTab('AUTO')}
+                        className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors ${sourcingTab === 'AUTO' ? 'border-gold-600 text-gold-600 bg-ivory-50' : 'border-transparent text-stone-400 hover:text-stone-600'}`}
+                    >
+                        Auto-Source
+                    </button>
+                    <button 
+                        onClick={() => setSourcingTab('MANUAL')}
+                        className={`flex-1 py-4 text-xs font-bold uppercase tracking-widest border-b-2 transition-colors ${sourcingTab === 'MANUAL' ? 'border-gold-600 text-gold-600 bg-ivory-50' : 'border-transparent text-stone-400 hover:text-stone-600'}`}
+                    >
+                        Manual Import
+                    </button>
+                 </div>
+                 
+                 <div className="p-8">
+                    {sourcingTab === 'AUTO' ? (
+                        <>
+                            {isSourcing ? (
+                                <div className="flex flex-col items-center justify-center py-12">
+                                    <p className="text-gold-600 font-bold uppercase tracking-widest animate-pulse">Running Intelligence Scan...</p>
+                                </div>
+                            ) : sourcingResult ? (
+                                <div className="space-y-6">
+                                    <h3 className="text-sm font-bold text-stone-400 uppercase tracking-widest">Identified Candidates</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {sourcingResult.simulatedMatches.map((match, idx) => (
+                                            <div key={idx} className="border border-stone-200 p-6 hover:border-gold-400 transition-all bg-white shadow-sm group">
+                                                <div className="flex items-start justify-between">
+                                                    <div>
+                                                        <h4 className="font-serif font-bold text-stone-900 text-lg group-hover:text-gold-600 transition-colors">{match.name}</h4>
+                                                        <p className="text-xs text-stone-500 uppercase mt-1">{match.currentRole}</p>
+                                                    </div>
+                                                </div>
+                                                <p className="mt-4 text-sm text-stone-600 leading-relaxed italic border-l-2 border-gold-200 pl-3">{match.matchExplanation}</p>
+                                                <button 
+                                                    onClick={() => handleImportCandidate(match)}
+                                                    className="mt-6 w-full bg-stone-900 text-white py-3 text-xs font-bold uppercase tracking-widest hover:bg-gold-600 transition-colors"
+                                                >
+                                                    Import Profile
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : null}
+                        </>
+                    ) : (
+                        <div className="space-y-6">
+                            <textarea 
+                                className="w-full h-48 border border-stone-300 p-4 focus:ring-1 focus:ring-gold-500 focus:border-gold-500 text-sm font-mono"
+                                placeholder="Paste LinkedIn Profile content here..."
+                                value={profileText}
+                                onChange={(e) => setProfileText(e.target.value)}
+                            ></textarea>
+                            <button 
+                                onClick={handleManualImport}
+                                disabled={isParsing || !profileText.trim()}
+                                className="bg-gold-600 text-white px-8 py-3 text-sm font-bold uppercase tracking-widest hover:bg-gold-700 w-full"
+                            >
+                                {isParsing ? 'Processing...' : 'Analyze & Import'}
+                            </button>
+                        </div>
+                    )}
+                 </div>
+             </div>
+          </div>
       )}
 
+      {/* Detailed Job View Modal */}
+      {viewJob && (
+         <div className="fixed inset-0 z-50 bg-stone-900/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white w-full max-w-3xl max-h-[90vh] overflow-y-auto flex flex-col shadow-2xl">
+               <div className="p-8 border-b border-stone-100 sticky top-0 bg-white z-10 flex justify-between">
+                  <div>
+                     <h2 className="text-3xl font-serif font-bold text-stone-900">{viewJob.title}</h2>
+                     <p className="text-gold-600 font-bold uppercase tracking-wider text-xs mt-2">{viewJob.company} • {viewJob.location}</p>
+                  </div>
+                  <button onClick={() => setViewJob(null)} className="text-stone-400 hover:text-stone-900">✕</button>
+               </div>
+               
+               <div className="p-8 flex-1 overflow-y-auto bg-ivory-50">
+                  <div className="prose prose-stone max-w-none text-stone-700 leading-loose">
+                     {viewJob.description}
+                  </div>
+                  
+                  {viewJob.requiredSkills && viewJob.requiredSkills.length > 0 && (
+                     <div className="mt-10 pt-10 border-t border-stone-200">
+                        <h4 className="text-xs font-bold text-stone-400 uppercase tracking-widest mb-4">Core Competencies</h4>
+                        <div className="flex flex-wrap gap-2">
+                           {viewJob.requiredSkills.map((skill, idx) => (
+                              <span key={idx} className="bg-white text-stone-800 px-4 py-2 text-xs font-bold border border-stone-200 shadow-sm">
+                                 {skill}
+                              </span>
+                           ))}
+                        </div>
+                     </div>
+                  )}
+               </div>
+
+               <div className="p-6 border-t border-stone-200 bg-white flex justify-end gap-4">
+                  <button 
+                     onClick={() => setViewJob(null)}
+                     className="px-6 py-3 text-xs font-bold uppercase tracking-widest text-stone-500 hover:text-stone-900"
+                  >
+                     Close
+                  </button>
+                  {userRole === 'CANDIDATE' ? (
+                     <button 
+                        onClick={() => toggleApply(viewJob.id)}
+                        className={`px-8 py-3 text-xs font-bold uppercase tracking-widest text-white transition-all ${
+                            appliedJobs.has(viewJob.id) 
+                            ? 'bg-emerald-700' 
+                            : 'bg-gold-600 hover:bg-gold-700'
+                        }`}
+                     >
+                        {appliedJobs.has(viewJob.id) ? 'Submitted' : 'Apply Now'}
+                     </button>
+                  ) : isManagement ? (
+                     <button 
+                        onClick={() => {
+                           setViewJob(null);
+                           handleSourceTalent(viewJob);
+                        }}
+                        className="px-8 py-3 bg-stone-900 text-white text-xs font-bold uppercase tracking-widest hover:bg-stone-800"
+                     >
+                        Source Talent
+                     </button>
+                  ) : null}
+               </div>
+            </div>
+         </div>
+      )}
+
+      {/* Grid Layout for Jobs */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
          {/* Sidebar Filters */}
-         <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-               <h3 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                  <svg className="w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
-                  Filters
-               </h3>
+         <div className="lg:col-span-1 space-y-8">
+            <div className="bg-white p-6 border border-stone-200 shadow-sm">
+               <h3 className="font-serif font-bold text-stone-900 text-lg mb-6 border-b border-stone-100 pb-2">Filter Criteria</h3>
                
-               {/* Job Type Filter */}
-               <div className="mb-5">
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Job Type</label>
-                  <select 
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                  >
-                     <option value="">All Types</option>
-                     {uniqueTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-               </div>
+               <div className="space-y-6">
+                   {/* Type Filter */}
+                   <div>
+                      <label className="block text-xs font-bold text-stone-400 uppercase mb-2 tracking-wide">Employment Type</label>
+                      <select 
+                        value={filterType}
+                        onChange={(e) => setFilterType(e.target.value)}
+                        className="w-full border border-stone-300 p-2 text-sm bg-ivory-50 focus:border-gold-500 outline-none"
+                      >
+                         <option value="">All Types</option>
+                         {uniqueTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                   </div>
 
-               {/* Location Filter */}
-               <div className="mb-5">
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Location</label>
-                  <select 
-                    value={filterLocation}
-                    onChange={(e) => setFilterLocation(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                  >
-                     <option value="">All Locations</option>
-                     {uniqueLocations.map(l => <option key={l} value={l}>{l}</option>)}
-                  </select>
-               </div>
+                   {/* Location Filter */}
+                   <div>
+                      <label className="block text-xs font-bold text-stone-400 uppercase mb-2 tracking-wide">Region</label>
+                      <select 
+                        value={filterLocation}
+                        onChange={(e) => setFilterLocation(e.target.value)}
+                        className="w-full border border-stone-300 p-2 text-sm bg-ivory-50 focus:border-gold-500 outline-none"
+                      >
+                         <option value="">All Regions</option>
+                         {uniqueLocations.map(l => <option key={l} value={l}>{l}</option>)}
+                      </select>
+                   </div>
 
-               {/* Company Filter - With Counts */}
-               <div className="mb-5">
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Company</label>
-                  <select 
-                    value={filterCompany}
-                    onChange={(e) => setFilterCompany(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-                  >
-                     <option value="">All Companies</option>
-                     {uniqueCompanies.map(c => (
-                        <option key={c.name} value={c.name}>
-                           {c.name} ({c.count})
-                        </option>
-                     ))}
-                  </select>
+                   {/* Company Filter */}
+                   <div>
+                      <label className="block text-xs font-bold text-stone-400 uppercase mb-2 tracking-wide">Client</label>
+                      <select 
+                        value={filterCompany}
+                        onChange={(e) => setFilterCompany(e.target.value)}
+                        className="w-full border border-stone-300 p-2 text-sm bg-ivory-50 focus:border-gold-500 outline-none"
+                      >
+                         <option value="">All Clients</option>
+                         {uniqueCompanies.map(c => (
+                            <option key={c.name} value={c.name}>{c.name} ({c.count})</option>
+                         ))}
+                      </select>
+                   </div>
                </div>
 
                <button 
                   onClick={() => { setFilterType(''); setFilterLocation(''); setFilterCompany(''); }}
-                  className="w-full text-sm text-indigo-600 font-semibold hover:underline"
+                  className="mt-6 w-full text-xs text-gold-600 font-bold uppercase tracking-widest hover:text-gold-700"
                >
-                  Reset Filters
+                  Reset All
                </button>
             </div>
          </div>
 
          {/* Listings Column */}
          <div className="lg:col-span-3">
-            {/* Sorting Bar */}
-            <div className="flex justify-between items-center mb-6">
-               <span className="text-sm text-gray-500 font-medium">{filteredJobs.length} Jobs Found</span>
-               <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Sort by:</span>
-                  <select 
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value)}
-                    className="border border-gray-300 rounded-lg p-1.5 text-sm focus:ring-indigo-500 outline-none"
-                  >
-                     <option value="newest">Date (Newest)</option>
-                     <option value="oldest">Date (Oldest)</option>
-                     <option value="relevance">Relevance Score</option>
-                  </select>
-               </div>
+            <div className="flex justify-between items-center mb-6 border-b border-stone-200 pb-2">
+               <span className="text-xs font-bold text-stone-400 uppercase tracking-widest">{filteredJobs.length} Positions Available</span>
             </div>
 
-            {/* Grid */}
-            <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-4">
               {filteredJobs.length === 0 ? (
-                 <div className="bg-gray-50 rounded-2xl p-10 text-center border border-dashed border-gray-300">
-                    <p className="text-gray-500">No jobs match your selected filters.</p>
+                 <div className="bg-ivory-50 p-12 text-center border border-dashed border-stone-300">
+                    <p className="text-stone-500 italic font-serif">No positions match your criteria.</p>
                  </div>
               ) : (
                  filteredJobs.map(job => (
-                    <div key={job.id} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-200 hover:border-indigo-300 transition-all group">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-xl font-bold text-gray-900 group-hover:text-indigo-900 transition-colors">{job.title}</h3>
-                          <div className="flex flex-wrap items-center gap-4 text-base text-gray-500 mt-2">
-                            <span className="flex items-center gap-1 font-medium text-gray-700">
-                              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-gray-400">
-                                <path fillRule="evenodd" d="M4 10a6 6 0 1012 0 6 6 0 00-12 0zm8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 6a1 1 0 00 .867.5zM7.175 16.48a6 6 0 01-2.35-2.35l1.767-.645a4 4 0 001.57 1.57l-1 1.425zM16 7a1 1 0 11-2 0 1 1 0 012 0zM6.8 13.113A5.99 5.99 0 0013.07 14.9l-.8-1.6a4 4 0 01-4.185 1.19l-1.287 1.624z" clipRule="evenodd" />
-                              </svg>
-                              {job.company}
-                            </span>
-                            <span className="hidden sm:inline text-gray-300">•</span>
+                    <div key={job.id} className="bg-white p-8 border border-stone-200 hover:border-gold-400 transition-all group relative">
+                      {isManagement && (
+                         <button 
+                            onClick={(e) => { e.stopPropagation(); handleSourceTalent(job); }}
+                            className="absolute top-8 right-8 text-[10px] font-bold uppercase tracking-widest bg-stone-50 text-stone-600 px-3 py-1 border border-stone-200 hover:bg-stone-900 hover:text-gold-500 transition-colors"
+                         >
+                            Source Talent
+                         </button>
+                      )}
+
+                      <div className="cursor-pointer" onClick={() => setViewJob(job)}>
+                          <h3 className="text-2xl font-serif font-bold text-stone-900 group-hover:text-gold-600 transition-colors">{job.title}</h3>
+                          <div className="flex flex-wrap items-center gap-4 text-sm text-stone-500 mt-2 font-medium">
+                            <span className="text-stone-800 font-bold">{job.company}</span>
+                            <span className="text-stone-300">•</span>
                             <span>{job.location}</span>
-                            <span className="hidden sm:inline text-gray-300">•</span>
-                            <span className="bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">{job.type}</span>
+                            <span className="text-stone-300">•</span>
+                            <span className="text-xs uppercase tracking-wide">{job.type}</span>
                           </div>
-                        </div>
-                        {userRole === 'CANDIDATE' && (
+                      </div>
+                      
+                      <div className="mt-6 flex justify-between items-center pt-6 border-t border-stone-100">
+                        <span className="text-xs text-stone-400 font-bold uppercase tracking-widest">Posted: {new Date(job.postedDate).toLocaleDateString()}</span>
+                        {userRole === 'CANDIDATE' ? (
                           <button 
                             onClick={() => toggleApply(job.id)}
-                            className={`border-2 px-6 py-2 rounded-lg text-sm font-bold transition-colors ${
+                            className={`px-6 py-2 text-xs font-bold uppercase tracking-widest transition-colors border ${
                                 appliedJobs.has(job.id) 
-                                ? 'bg-emerald-500 text-white border-emerald-500' 
-                                : 'bg-white border-emerald-600 text-emerald-600 hover:bg-emerald-50'
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                                : 'bg-white text-stone-900 border-stone-900 hover:bg-stone-900 hover:text-white'
                             }`}
                           >
-                            {appliedJobs.has(job.id) ? 'Applied ✓' : 'Apply Now'}
+                            {appliedJobs.has(job.id) ? 'Applied' : 'Apply Now'}
                           </button>
-                        )}
-                      </div>
-                      <p className="mt-4 text-gray-600 text-base line-clamp-2 leading-relaxed">{job.description}</p>
-                      <div className="mt-6 flex justify-between items-center text-sm text-gray-400 font-medium">
-                        <span>Posted: {new Date(job.postedDate).toLocaleDateString()}</span>
-                        {sortOrder === 'relevance' && userRole === 'CANDIDATE' && (
-                           <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Scan Profile to see Score</span>
+                        ) : (
+                          <button 
+                             onClick={() => setViewJob(job)}
+                             className="text-gold-600 hover:text-gold-700 text-xs font-bold uppercase tracking-widest"
+                          >
+                             View Details →
+                          </button>
                         )}
                       </div>
                     </div>

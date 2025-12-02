@@ -13,7 +13,7 @@ export type UserRole = 'ADMIN' | 'HR_MANAGER' | 'CANDIDATE' | null;
 
 export interface CandidateDocument {
   name: string;
-  type: string; // 'id', 'lc1_letter', 'certificate', 'cv', 'hr_upload'
+  type: string; // 'id', 'lc1_letter', 'certificate', 'cv', 'hr_upload', 'selfie'
   base64: string;
   mimeType: string;
 }
@@ -41,6 +41,7 @@ export interface OsintReport {
   socialMediaSentiment: 'POSITIVE' | 'NEUTRAL' | 'NEGATIVE';
   redFlags: string[];
   improvementTips: string[]; // Advice for the candidate
+  sources?: string[]; // Real links found during search
 }
 
 export interface ComplianceReport {
@@ -52,6 +53,20 @@ export interface ComplianceReport {
   riskAssessment: ComplianceRisk;
   auditNotes: string;
   missingDocuments: string[];
+  identityVerification?: {
+    isMatch: boolean;
+    confidence: number; // 0-100
+    reason: string;
+  };
+  sectorCompliance?: {
+    sector: string;
+    details: Record<string, any>;
+  };
+  pauCompliance?: {
+    nationalContentTier: string;
+    nogtrRegistered: boolean;
+    hseCertifications: string[];
+  };
 }
 
 export interface Candidate {
@@ -64,6 +79,9 @@ export interface Candidate {
   timestamp: string;
   documents?: CandidateDocument[]; // Store docs for later viewing
   basicScore?: number; // Initial automated score
+  source?: 'UPLOAD' | 'LINKEDIN'; // Track origin
+  email?: string;
+  emailVerified?: boolean;
 }
 
 export interface Job {
@@ -86,4 +104,16 @@ export interface JobMatchResult {
   reason: string;
   experienceAnalysis?: string; // New: Specific analysis
   locationAnalysis?: string; // New: Specific analysis
+}
+
+export interface SourcingResult {
+  searchString: string; // The Boolean string
+  explanation: string;
+  simulatedMatches: {
+    name: string;
+    headline: string;
+    currentRole: string;
+    matchExplanation: string;
+    profileUrl: string; // Fake linkedin URL
+  }[];
 }

@@ -5,13 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Equatorial Talent Intelligence (ETI)</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              gold: {
+                400: '#E5C579',
+                500: '#C5A059',
+                600: '#B08D45',
+                700: '#8E7035',
+              },
+              ivory: {
+                50: '#F9F9F7',
+                100: '#F2F2EE',
+              },
+              stone: {
+                900: '#111827', // Rich Black
+                800: '#1F2937', // Charcoal
+              }
+            },
+            fontFamily: {
+              sans: ['Lato', 'sans-serif'],
+              serif: ['Playfair Display', 'serif'],
+            }
+          }
+        }
+      }
+    </script>
     <style>
       html {
-        font-size: 17px; /* Increased base font size by 1px (approx "by 1") */
+        font-size: 17px;
       }
       body {
-        font-family: 'Inter', sans-serif;
+        font-family: 'Lato', sans-serif;
+        background-color: #F9F9F7;
+        color: #111827;
+      }
+      h1, h2, h3, h4, h5, h6 {
+        font-family: 'Playfair Display', serif;
       }
       /* Custom scrollbar for chat */
       .scrollbar-hide::-webkit-scrollbar {
@@ -22,18 +57,22 @@
           scrollbar-width: none;
       }
     </style>
-  <script type="importmap">
+<script type="importmap">
 {
   "imports": {
     "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
     "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0"
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
+    "vite": "https://aistudiocdn.com/vite@^7.2.6",
+    "path": "https://aistudiocdn.com/path@^0.12.7"
   }
 }
 </script>
 </head>
-  <body class="bg-gray-50 text-gray-900 antialiased">
+  <body class="bg-ivory-50 text-stone-900 antialiased">
     <div id="root"></div>
   </body>
 </html>
